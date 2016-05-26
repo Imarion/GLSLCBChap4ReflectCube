@@ -16,6 +16,7 @@ uniform mat4 MVP;                // Projection * Modelview
 
 void main()
 {
+
     if (DrawSkyBox) {
         ReflectDir = VertexPosition;
     } else {

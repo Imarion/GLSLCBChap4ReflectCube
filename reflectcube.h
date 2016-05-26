@@ -66,6 +66,7 @@ private:
     GLuint mVAOTeapot, mVAOSkybox, mVBO, mIBO;
     GLuint mPositionBufferHandle, mColorBufferHandle;
     GLuint mRotationMatrixLocation;
+    GLuint SkyBoxTexId;
 
     Teapot     *mTeapot;
     SkyBox     *mSkyBox;

@@ -225,6 +225,8 @@ void MyWindow::render()
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, SkyBoxTexId);
 
     mProgram->bind();
     {
@@ -234,14 +236,14 @@ void MyWindow::render()
         mProgram->setUniformValue("ModelMatrix", model);
         mProgram->setUniformValue("MVP", ProjectionMatrix * ViewMatrix);
 
-        //glDrawElements(GL_TRIANGLES, mSkyBox->getnFaces(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
+        glDrawElements(GL_TRIANGLES, mSkyBox->getnFaces(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
         //glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
     }
     mProgram->release();
-
+/*
     // *** Draw teapot
     mFuncs->glBindVertexArray(mVAOTeapot);
 
@@ -252,17 +254,12 @@ void MyWindow::render()
     mProgram->bind();
     {
         mProgram->setUniformValue("DrawSkyBox", false);
-        mProgram->setUniformValue("Light.Position", worldLight );
-        mProgram->setUniformValue("Light.Intensity", QVector3D(1.0f, 1.0f, 1.0f));
-
-        mProgram->setUniformValue("Material.Kd", 0.9f, 0.9f, 0.9f);
-        mProgram->setUniformValue("Material.Ks", 0.0f, 0.0f, 0.0f);
-        mProgram->setUniformValue("Material.Ka", 0.1f, 0.1f, 0.1f);
-        mProgram->setUniformValue("Material.Shininess", 100.0f);
+        mProgram->setUniformValue("MaterialColor", 0.5f, 0.5f, 0.5f, 1.0f);
+        mProgram->setUniformValue("ReflectFactor", 0.85f);
 
         QMatrix4x4 mv1 = ViewMatrix * ModelMatrixTeapot;
         mProgram->setUniformValue("ModelViewMatrix", mv1);
-        mProgram->setUniformValue("NormalMatrix", mv1.normalMatrix());
+        mProgram->setUniformValue("ModelMatrix", ModelMatrixTeapot);
         mProgram->setUniformValue("MVP", ProjectionMatrix * mv1);
 
         glDrawElements(GL_TRIANGLES, 6 * mTeapot->getnFaces(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
@@ -272,7 +269,7 @@ void MyWindow::render()
         glDisableVertexAttribArray(2);
     }
     mProgram->release();
-
+*/
     mContext->swapBuffers(this);
 }
 
@@ -324,9 +321,8 @@ void MyWindow::PrepareCubeMap(GLenum TextureUnit, const QString& BaseFileName, b
 {
     glActiveTexture(TextureUnit);
 
-    GLuint texID;
-    glGenTextures(1, &texID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
+    glGenTextures(1, &SkyBoxTexId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, SkyBoxTexId);
 
     const char * suffixes[] = { "posx", "negx", "posy", "negy", "posz", "negz" };
     GLuint targets[] = {
@@ -345,7 +341,7 @@ void MyWindow::PrepareCubeMap(GLenum TextureUnit, const QString& BaseFileName, b
         if (!TexImg.load(TexName)) qDebug() << "Erreur chargement texture " << TexName;
         if (flip==true) TexImg=TexImg.mirrored();
 
-        glTexSubImage2D(targets[i], 0, 0, 0, TexImg.width(), TexImg.height(), GL_BGRA, GL_UNSIGNED_BYTE, TexImg.bits());
+        mFuncs->glTexSubImage2D(targets[i], 0, 0, 0, TexImg.width(), TexImg.height(), GL_BGRA, GL_UNSIGNED_BYTE, TexImg.bits());
     }
 
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
