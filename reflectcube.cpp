@@ -136,7 +136,7 @@ void MyWindow::CreateVertexBuffer()
 
     // *** Skybox
     mFuncs->glGenVertexArrays(1, &mVAOSkybox);
-    mFuncs->glBindVertexArray(mVAOSkybox);
+    mFuncs->glBindVertexArray(mVAOSkybox);    
 
     mSkyBox = new SkyBox();
 
@@ -145,7 +145,7 @@ void MyWindow::CreateVertexBuffer()
     glGenBuffers(2, SkyboxHandles);
 
     glBindBuffer(GL_ARRAY_BUFFER, SkyboxHandles[0]);
-    glBufferData(GL_ARRAY_BUFFER, (3 * mSkyBox->getnVerts()) * sizeof(float), mSkyBox->getv(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, (3 * mSkyBox->getnVerts()) * sizeof(float), mSkyBox->getv(), GL_STATIC_DRAW);    
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, SkyboxHandles[1]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mSkyBox->getnFaces() * sizeof(unsigned int), mSkyBox->getel(), GL_STATIC_DRAW);
@@ -220,6 +220,28 @@ void MyWindow::render()
     //ModelMatrix.rotate(0.3f, QVector3D(0.1f, 0.0f, 0.1f));
     QVector4D worldLight = QVector4D(0.0f, 0.0f, 0.0f, 1.0f);
 
+    // *** Draw Skybox
+    mFuncs->glBindVertexArray(mVAOSkybox);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    mProgram->bind();
+    {
+        mProgram->setUniformValue("DrawSkyBox", true);
+
+        QMatrix4x4 model;
+        mProgram->setUniformValue("ModelMatrix", model);
+        mProgram->setUniformValue("MVP", ProjectionMatrix * ViewMatrix);
+
+        //glDrawElements(GL_TRIANGLES, mSkyBox->getnFaces(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
+        //glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
+
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+    }
+    mProgram->release();
+
     // *** Draw teapot
     mFuncs->glBindVertexArray(mVAOTeapot);
 
@@ -229,6 +251,7 @@ void MyWindow::render()
 
     mProgram->bind();
     {
+        mProgram->setUniformValue("DrawSkyBox", false);
         mProgram->setUniformValue("Light.Position", worldLight );
         mProgram->setUniformValue("Light.Intensity", QVector3D(1.0f, 1.0f, 1.0f));
 
