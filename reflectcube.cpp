@@ -16,11 +16,12 @@
 
 MyWindow::~MyWindow()
 {
-    if (mProgram != 0) delete mProgram;
+    if (mProgramSkybox != 0) delete mProgramSkybox;
+    if (mProgramObject != 0) delete mProgramObject;
 }
 
 MyWindow::MyWindow()
-    : mProgram(0), currentTimeMs(0.0f), currentTimeS(0.0f), tPrev(0.0f), angle(1.5708f), rotSpeed(M_PI / 2.0f)
+    : mProgramSkybox(0), mProgramObject(0), currentTimeMs(0.0f), currentTimeS(0.0f), tPrev(0.0f), angle(1.5708f), rotSpeed(M_PI / 2.0f)
 {
     setSurfaceType(QWindow::OpenGLSurface);
     setFlags(Qt::Window | Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
@@ -224,52 +225,45 @@ void MyWindow::render()
     mFuncs->glBindVertexArray(mVAOSkybox);
 
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, SkyBoxTexId);
 
-    mProgram->bind();
+    mProgramSkybox->bind();
     {
-        mProgram->setUniformValue("DrawSkyBox", true);
+        mProgramSkybox->setUniformValue("DrawSkyBox", true);
 
-        QMatrix4x4 model;
-        mProgram->setUniformValue("ModelMatrix", model);
-        mProgram->setUniformValue("MVP", ProjectionMatrix * ViewMatrix);
+        mProgramSkybox->setUniformValue("MVP", ProjectionMatrix * ViewMatrix);
 
         glDrawElements(GL_TRIANGLES, mSkyBox->getnFaces(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
         //glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
 
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(0);        
     }
-    mProgram->release();
-/*
+    mProgramSkybox->release();
+
     // *** Draw teapot
     mFuncs->glBindVertexArray(mVAOTeapot);
 
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(1);    
 
-    mProgram->bind();
+    mProgramObject->bind();
     {
-        mProgram->setUniformValue("DrawSkyBox", false);
-        mProgram->setUniformValue("MaterialColor", 0.5f, 0.5f, 0.5f, 1.0f);
-        mProgram->setUniformValue("ReflectFactor", 0.85f);
+        mProgramObject->setUniformValue("DrawSkyBox", false);
+        mProgramObject->setUniformValue("MaterialColor", 0.5f, 0.5f, 0.5f, 1.0f);
+        mProgramObject->setUniformValue("ReflectFactor", 0.85f);
 
-        QMatrix4x4 mv1 = ViewMatrix * ModelMatrixTeapot;
-        mProgram->setUniformValue("ModelViewMatrix", mv1);
-        mProgram->setUniformValue("ModelMatrix", ModelMatrixTeapot);
-        mProgram->setUniformValue("MVP", ProjectionMatrix * mv1);
+        mProgramObject->setUniformValue("WorldCameraPosition", cameraPos);
+
+        QMatrix4x4 mv1 = ViewMatrix * ModelMatrixTeapot;        
+        mProgramObject->setUniformValue("ModelMatrix", ModelMatrixTeapot);
+        mProgramObject->setUniformValue("MVP", ProjectionMatrix * mv1);
 
         glDrawElements(GL_TRIANGLES, 6 * mTeapot->getnFaces(), GL_UNSIGNED_INT, ((GLubyte *)NULL + (0)));
 
         glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glDisableVertexAttribArray(2);
+        glDisableVertexAttribArray(1);        
     }
-    mProgram->release();
-*/
+    mProgramObject->release();
+
     mContext->swapBuffers(this);
 }
 
@@ -280,23 +274,41 @@ void MyWindow::initShaders()
     QFile         shaderFile;
     QByteArray    shaderSource;
 
-    //Simple ADS
-    shaderFile.setFileName(":/vshader.txt");
+    //Skybox shader
+    shaderFile.setFileName(":/vshader_skybox.txt");
     shaderFile.open(QIODevice::ReadOnly);
     shaderSource = shaderFile.readAll();
     shaderFile.close();
-    qDebug() << "vertex compile: " << vShader.compileSourceCode(shaderSource);
+    qDebug() << "vertex skybox compile: " << vShader.compileSourceCode(shaderSource);
 
     shaderFile.setFileName(":/fshader.txt");
     shaderFile.open(QIODevice::ReadOnly);
     shaderSource = shaderFile.readAll();
     shaderFile.close();
-    qDebug() << "frag   compile: " << fShader.compileSourceCode(shaderSource);
+    qDebug() << "frag          compile: " << fShader.compileSourceCode(shaderSource);
 
-    mProgram = new (QOpenGLShaderProgram);
-    mProgram->addShader(&vShader);
-    mProgram->addShader(&fShader);
-    qDebug() << "shader link: " << mProgram->link();
+    mProgramSkybox = new (QOpenGLShaderProgram);
+    mProgramSkybox->addShader(&vShader);
+    mProgramSkybox->addShader(&fShader);
+    qDebug() << "shader link: " << mProgramSkybox->link();
+
+    //Object shader
+    shaderFile.setFileName(":/vshader_object.txt");
+    shaderFile.open(QIODevice::ReadOnly);
+    shaderSource = shaderFile.readAll();
+    shaderFile.close();
+    qDebug() << "vertex object compile: " << vShader.compileSourceCode(shaderSource);
+
+    shaderFile.setFileName(":/fshader.txt");
+    shaderFile.open(QIODevice::ReadOnly);
+    shaderSource = shaderFile.readAll();
+    shaderFile.close();
+    qDebug() << "frag          compile: " << fShader.compileSourceCode(shaderSource);
+
+    mProgramObject = new (QOpenGLShaderProgram);
+    mProgramObject->addShader(&vShader);
+    mProgramObject->addShader(&fShader);
+    qDebug() << "shader link: " << mProgramObject->link();
 }
 
 void MyWindow::PrepareTexture(GLenum TextureUnit, GLenum TextureTarget, const QString& FileName, bool flip)

@@ -14,7 +14,6 @@ SOURCES += main.cpp \
     skybox.cpp
 
 HEADERS += \
-    fog.h \
     reflectcube.h \
     teapotdata.h \
     teapot.h \
@@ -22,11 +21,13 @@ HEADERS += \
 	
 OTHER_FILES += \
     fshader.txt \
-    vshader.txt
+    vshader_skybox.txt \
+    vshader_object.txt
 
 RESOURCES += \
     shaders.qrc
 
 DISTFILES += \
     fshader.txt \
-    vshader.txt
+    vshader_skybox.txt \
+    vshader_object.txt

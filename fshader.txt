@@ -22,6 +22,5 @@ void main()
         FragColor = mix(MaterialColor, cubeMapColor, ReflectFactor);
     }
 
-    //FragColor = vec4(ambAndDiff, 1.0) * baseColor + vec4(spec, 1.0) * baseColor;
     //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
